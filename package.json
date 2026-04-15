@@ -2,9 +2,14 @@
   "name": "@s1eke/webpub-streamer",
   "version": "0.0.1",
   "type": "module",
+  "license": "MIT",
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "sideEffects": false,
   "types": "./dist/index.d.ts",
   "exports": {

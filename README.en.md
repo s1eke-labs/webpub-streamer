@@ -185,4 +185,4 @@ npm run test:integration
 
 ## License
 
-Internal project for now. Add a formal license section before public distribution.
+This project is licensed under the [MIT License](./LICENSE).

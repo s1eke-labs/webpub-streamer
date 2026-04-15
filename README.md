@@ -185,4 +185,4 @@ npm run test:integration
 
 ## License
 
-当前仍按内部项目维护；如果要公开分发，建议在发布前补充正式许可证说明。
+本项目采用 [MIT License](./LICENSE)。
