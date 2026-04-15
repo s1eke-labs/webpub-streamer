@@ -1,0 +1,15 @@
+{
+  "name": "@s1eke/webpub-streamer",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.4",
+    "eslint-config-ali": "^16.6.0",
+    "typescript": "^6.0.2"
+  }
+}
