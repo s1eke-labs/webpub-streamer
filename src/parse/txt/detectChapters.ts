@@ -1,22 +1,20 @@
+import { AUTO_TXT_CHAPTER_PATTERNS } from './chapterRules.js';
+
 export interface ParsedChapter {
   title: string;
   lines: string[];
 }
 
-const CHINESE_CHAPTER_PATTERN = /^第[0-9一二三四五六七八九十百千零两]+[章回节卷部篇].*$/u;
-const ENGLISH_CHAPTER_PATTERN = /^chapter\s+\d+.*$/iu;
-
-function normalizeLine(line: string): string {
+function normalizeChapterTitle(line: string): string {
   return line.replace(/\s+/g, ' ').trim();
 }
 
 function isHeadingLike(line: string, patterns: RegExp[]): boolean {
-  const normalized = normalizeLine(line);
-  if (!normalized) {
+  if (!line.trim()) {
     return false;
   }
 
-  return patterns.some((pattern) => pattern.test(normalized));
+  return patterns.some((pattern) => pattern.test(line));
 }
 
 function createFallbackTitle(index: number): string {
@@ -32,10 +30,6 @@ export function detectChapters(
 ): ParsedChapter[] {
   const normalized = text.replace(/\r\n?/g, '\n');
   const lines = normalized.split('\n');
-  const defaultPatterns = [CHINESE_CHAPTER_PATTERN, ENGLISH_CHAPTER_PATTERN];
-  const patterns = options.chapterDetection === 'regex' && options.chapterPatterns.length > 0
-    ? options.chapterPatterns
-    : defaultPatterns;
 
   if (options.chapterDetection === 'none') {
     return [
@@ -45,6 +39,10 @@ export function detectChapters(
       },
     ];
   }
+
+  const patterns = options.chapterDetection === 'auto'
+    ? AUTO_TXT_CHAPTER_PATTERNS
+    : options.chapterPatterns;
 
   const chapters: ParsedChapter[] = [];
   let currentChapter: ParsedChapter | null = null;
@@ -56,7 +54,7 @@ export function detectChapters(
         chapters.push(currentChapter);
       }
       currentChapter = {
-        title: normalizeLine(line),
+        title: line,
         lines: [],
       };
       continue;
@@ -77,8 +75,8 @@ export function detectChapters(
   }
 
   const filtered = chapters
-    .map((chapter) => ({
-      title: chapter.title || createFallbackTitle(chapters.indexOf(chapter)),
+    .map((chapter, index) => ({
+      title: normalizeChapterTitle(chapter.title) || createFallbackTitle(index),
       lines: chapter.lines.filter((line) => line.trim().length > 0),
     }))
     .filter((chapter) => chapter.lines.length > 0 || chapter.title.trim().length > 0);

@@ -12,6 +12,23 @@ import {
 
 const encoder = new TextEncoder();
 
+function normalizeDocumentText(text: string): string {
+  const normalized = text.replace(/\r\n?/g, '\n');
+  const lines = normalized.split('\n');
+  let start = 0;
+  let end = lines.length - 1;
+
+  while (start <= end && lines[start]?.trim().length === 0) {
+    start += 1;
+  }
+
+  while (end >= start && lines[end]?.trim().length === 0) {
+    end -= 1;
+  }
+
+  return start > end ? '' : lines.slice(start, end + 1).join('\n');
+}
+
 function inferTitle(fileName: string, explicitTitle?: string): string {
   if (explicitTitle?.trim()) {
     return explicitTitle.trim();
@@ -26,7 +43,7 @@ export async function parseTxt(
   options: Required<OpenPublicationOptions>,
 ): Promise<CanonicalPublicationGraph> {
   const decoded = decodeText(sourceBytes, options.txt.encoding);
-  const normalizedText = decoded.content.replace(/\r\n?/g, '\n').trim();
+  const normalizedText = normalizeDocumentText(decoded.content);
   const title = inferTitle(sourceName, options.txt.title);
   const language = options.txt.language ?? 'en';
 
