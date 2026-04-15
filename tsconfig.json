@@ -4,12 +4,27 @@
     "lib": ["ES2023", "DOM", "DOM.Iterable", "WebWorker"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "strict": true,
     "noEmit": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
-  }
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node", "vite/client"],
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@s1eke/webpub-streamer": ["./src/index.ts"],
+      "@s1eke/webpub-streamer/sw": ["./src/sw.ts"],
+      "@s1eke/webpub-streamer/testing": ["./src/testing.ts"]
+    }
+  },
+  "include": [
+    "src",
+    "tests",
+    "vite.config.ts",
+    "playwright.config.ts"
+  ]
 }
