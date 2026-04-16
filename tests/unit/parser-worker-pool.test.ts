@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createWebPubStreamer } from '../../src/core/createWebPubStreamer.js';
 import { processPublicationRequest } from '../../src/core/processPublication.js';
+import type { ParserRequestPayload } from '../../src/core/types.js';
 import { createIndexedDbRuntimeStore } from '../../src/store/idb/createIndexedDbRuntimeStore.js';
 import { createEnglishTxt } from '../helpers/createTextFixtures.js';
 
@@ -25,6 +26,12 @@ function createMountStub(dbName: string) {
 }
 
 type WorkerBehavior = 'success' | 'error';
+interface FakeParserWorkerMessage {
+  id: string;
+  payload: Omit<ParserRequestPayload, 'sourceBytes'> & {
+    sourceBytes: ArrayBuffer;
+  };
+}
 
 class FakeParserWorker {
   static activeCount = 0;
@@ -51,13 +58,7 @@ class FakeParserWorker {
     this.listeners.set(type, listeners);
   }
 
-  postMessage(message: {
-    id: string;
-    payload: {
-      sourceName: string;
-      sourceBytes: ArrayBuffer;
-    };
-  }): void {
+  postMessage(message: FakeParserWorkerMessage): void {
     FakeParserWorker.activeCount += 1;
     FakeParserWorker.maxActiveCount = Math.max(
       FakeParserWorker.maxActiveCount,
