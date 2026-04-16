@@ -3,6 +3,14 @@
   "version": "0.0.2",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/s1eke-labs/webpub-streamer"
+  },
+  "homepage": "https://github.com/s1eke-labs/webpub-streamer",
+  "bugs": {
+    "url": "https://github.com/s1eke-labs/webpub-streamer/issues"
+  },
   "files": [
     "dist"
   ],
