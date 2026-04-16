@@ -30,11 +30,13 @@ declare global {
       openBuffer: (buffer: number[], name: string, type: string) => Promise<{
         publicationId: string;
         manifestUrl: string;
+        debugEventTypes: string[];
       }>;
       clear: () => Promise<void>;
       getLastRuntime: () => {
         publicationId: string | null;
         manifestUrl: string | null;
+        debugEventTypes: string[];
       };
     };
   }
@@ -167,6 +169,7 @@ function Harness() {
               return {
                 publicationId: nextRuntime.publicationId,
                 manifestUrl: nextRuntime.manifestUrl,
+                debugEventTypes: nextRuntime.debug?.events.map((eventItem) => eventItem.type) ?? [],
               };
             } catch (error) {
               const normalizedError = error instanceof Error ? error : new Error(String(error));
@@ -192,6 +195,7 @@ function Harness() {
             return {
               publicationId: runtimeRef.current?.publicationId ?? null,
               manifestUrl: runtimeRef.current?.manifestUrl ?? null,
+              debugEventTypes: runtimeRef.current?.debug?.events.map((eventItem) => eventItem.type) ?? [],
             };
           },
         };

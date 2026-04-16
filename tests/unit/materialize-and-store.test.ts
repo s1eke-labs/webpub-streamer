@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { RuntimeStore } from '../../src/core/types.js';
 import { createWebPubStreamer } from '../../src/core/createWebPubStreamer.js';
 import { processPublicationRequest } from '../../src/core/processPublication.js';
 import { publicationManifestUrl } from '../../src/mount/runtimeUrls.js';
@@ -81,5 +82,53 @@ describe('materialization and store lifecycle', () => {
 
     await streamer.destroy(runtime.publicationId);
     expect(await store.getPublication(runtime.publicationId)).toBeNull();
+  });
+
+  it('rebuilds the runtime when a cached publication is pruned before lease creation', async () => {
+    const backingStore = await createIndexedDbRuntimeStore({
+      dbName: `stale-cache-db-${crypto.randomUUID()}`,
+    });
+    const registrationStub = createServiceWorkerRegistrationStub();
+    let leaseCreationCount = 0;
+    const store: RuntimeStore = {
+      ...backingStore,
+      async createLease(publicationId, ttlMs) {
+        leaseCreationCount += 1;
+        if (leaseCreationCount === 2) {
+          await backingStore.destroyPublication(publicationId);
+        }
+
+        return backingStore.createLease(publicationId, ttlMs);
+      },
+    };
+
+    const streamer = await createWebPubStreamer({
+      mount: {
+        mode: 'merged',
+        scope: '/__webpub_streamer__/',
+        scriptUrl: '/runtime-sw.js',
+        dbName: backingStore.dbName,
+        healthUrl: '/__webpub_streamer__/__health',
+        ready: Promise.resolve(registrationStub),
+        ensureReady: async () => registrationStub,
+      },
+      store,
+    });
+
+    const firstRuntime = await streamer.open(encoder.encode(createEnglishTxt()).buffer, {
+      format: 'txt',
+    });
+    await firstRuntime.release();
+
+    const rebuiltRuntime = await streamer.open(encoder.encode(createEnglishTxt()).buffer, {
+      format: 'txt',
+    });
+
+    expect(rebuiltRuntime.publicationId).toBe(firstRuntime.publicationId);
+    expect(rebuiltRuntime.debug?.events.some((event) => event.type === 'cache-hit')).toBe(true);
+    expect(rebuiltRuntime.debug?.events.some((event) => event.type === 'parse')).toBe(true);
+    expect(rebuiltRuntime.debug?.events.some((event) => event.type === 'lease' && event.detail?.status === 'stale-cache')).toBe(true);
+
+    await rebuiltRuntime.release();
   });
 });

@@ -9,6 +9,7 @@
   },
   "include": [
     "src/index.ts",
+    "src/debug.ts",
     "src/sw.ts",
     "src/testing.ts",
     "src/global.d.ts"

@@ -35,6 +35,12 @@ export class InvalidPublicationError extends WebPubStreamerError {
   }
 }
 
+export class PublicationNotFoundError extends WebPubStreamerError {
+  constructor(publicationId: string) {
+    super(`Publication not found: ${publicationId}`, 'PUBLICATION_NOT_FOUND');
+  }
+}
+
 export class EncryptedPublicationError extends WebPubStreamerError {
   constructor() {
     super('Encrypted or DRM-protected EPUB files are not supported', 'ENCRYPTED_PUBLICATION');

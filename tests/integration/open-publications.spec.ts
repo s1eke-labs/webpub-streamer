@@ -21,9 +21,13 @@ async function openBuffer(
   buffer: Uint8Array,
   name: string,
   type: string,
-): Promise<void> {
-  await page.evaluate(async ({ bytes, name: fileName, type: mediaType }) => {
-    await window.__webpubHarness!.openBuffer(bytes, fileName, mediaType);
+): Promise<{
+  publicationId: string;
+  manifestUrl: string;
+  debugEventTypes: string[];
+}> {
+  return page.evaluate(async ({ bytes, name: fileName, type: mediaType }) => {
+    return window.__webpubHarness!.openBuffer(bytes, fileName, mediaType);
   }, {
     bytes: Array.from(buffer),
     name,
@@ -67,6 +71,25 @@ test('keeps standalone runtime service worker as a smoke-tested fallback', async
   });
 
   await expect(page.getByTestId('publication-title')).toHaveText('fixture');
+  await expect(page.getByTestId('publication-loaded')).toHaveText('yes');
+  await expect(page.getByTestId('reader-mounted')).toBeVisible();
+});
+
+test('reuses cached publications without reparsing on the second open', async ({ page }) => {
+  await bootHarness(page, 'merged');
+  const first = await openBuffer(page, encoder.encode(createEnglishTxt()), 'fixture.txt', 'text/plain');
+  await expect(page.getByTestId('phase')).toHaveText('open:done', {
+    timeout: 15_000,
+  });
+
+  const second = await openBuffer(page, encoder.encode(createEnglishTxt()), 'fixture.txt', 'text/plain');
+  await expect(page.getByTestId('phase')).toHaveText('open:done', {
+    timeout: 15_000,
+  });
+
+  expect(first.debugEventTypes).toContain('parse');
+  expect(second.debugEventTypes).toContain('cache-hit');
+  expect(second.debugEventTypes).not.toContain('parse');
   await expect(page.getByTestId('publication-loaded')).toHaveText('yes');
   await expect(page.getByTestId('reader-mounted')).toBeVisible();
 });

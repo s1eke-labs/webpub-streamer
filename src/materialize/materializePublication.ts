@@ -16,7 +16,7 @@ export function materializePublication(params: {
   parserVersion: string;
   graph: CanonicalPublicationGraph;
   manifestBaseUrl: string;
-}): MaterializedPublication {
+}): Omit<MaterializedPublication, 'source' | 'txtChapterDiagnostics'> {
   const manifest = buildManifest(params.graph, params.manifestBaseUrl);
   const positions = buildPositions(params.graph.readingOrder);
   const resources = writeResources(params.graph, manifest, positions);

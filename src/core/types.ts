@@ -41,6 +41,42 @@ export interface StreamerWarning {
   detail?: unknown;
 }
 
+export type TxtChapterDiagnosticSource = 'builtin' | 'custom' | 'fallback';
+
+export interface TxtChapterDiagnostic {
+  title: string;
+  lineNumber: number;
+  ruleName?: string;
+  source: TxtChapterDiagnosticSource;
+}
+
+export interface PublicationRuntimeSource {
+  name: string;
+  mediaType?: string;
+  format: Exclude<InputFormat, 'auto'>;
+  byteLength: number;
+}
+
+export type StreamerDebugEventType =
+  | 'phase'
+  | 'cache-hit'
+  | 'queue'
+  | 'dispatch'
+  | 'parse'
+  | 'persist'
+  | 'lease'
+  | 'gc'
+  | 'gc-evict';
+
+export interface StreamerDebugEvent {
+  type: StreamerDebugEventType;
+  timestamp: number;
+  operationId?: string;
+  publicationId?: string;
+  phase?: string;
+  detail?: Record<string, unknown>;
+}
+
 export interface ManifestMetadata {
   '@type': 'http://schema.org/Book';
   title: string;
@@ -108,6 +144,9 @@ export interface PublicationRuntime {
     manifest: ReadiumManifest;
     positions: PositionsList;
     warnings: StreamerWarning[];
+    events: StreamerDebugEvent[];
+    source: PublicationRuntimeSource;
+    txtChapterDiagnostics?: TxtChapterDiagnostic[];
   };
 }
 
@@ -161,7 +200,9 @@ export interface CreateWebPubStreamerOptions {
   validateByDefault?: boolean;
   parserMode?: 'auto' | 'inline';
   parserWorkerScriptUrl?: string;
+  parserWorkerPoolSize?: number;
   debugReporter?: (phase: string) => void;
+  debugSink?: (event: StreamerDebugEvent) => void;
 }
 
 export interface WebPubStreamer {
@@ -186,6 +227,13 @@ export interface PublicationRecord {
   refCount: number;
   ephemeral: boolean;
   destroyedAt?: number;
+  resourceBytes?: number;
+  resourceCount?: number;
+  sourceName?: string;
+  sourceMediaType?: string;
+  sourceFormat?: Exclude<InputFormat, 'auto'>;
+  sourceByteLength?: number;
+  txtChapterDiagnostics?: TxtChapterDiagnostic[];
 }
 
 export interface ResourceRecord {
@@ -211,6 +259,11 @@ export interface PersistedPublicationPayload {
   resources: ResourceRecord[];
 }
 
+export interface RuntimeStoreGcOptions {
+  timestamp?: number;
+  debugSink?: (event: StreamerDebugEvent) => void;
+}
+
 export interface RuntimeStore {
   readonly kind: 'idb';
   readonly dbName: string;
@@ -228,7 +281,7 @@ export interface RuntimeStore {
   destroyPublication: (publicationId: string) => Promise<void>;
   markPublicationDestroyed: (publicationId: string, timestamp?: number) => Promise<void>;
   clear: () => Promise<void>;
-  gc: (timestamp?: number) => Promise<void>;
+  gc: (input?: number | RuntimeStoreGcOptions) => Promise<void>;
 }
 
 export interface MaterializedResource {
@@ -249,6 +302,8 @@ export interface MaterializedPublication {
   positions: PositionsList;
   resources: MaterializedResource[];
   warnings: StreamerWarning[];
+  source: PublicationRuntimeSource;
+  txtChapterDiagnostics?: TxtChapterDiagnostic[];
 }
 
 export interface CanonicalResource {
@@ -284,6 +339,7 @@ export interface CanonicalPublicationGraph {
   toc: TocItem[];
   cover?: CanonicalResource;
   warnings: StreamerWarning[];
+  txtChapterDiagnostics?: TxtChapterDiagnostic[];
 }
 
 export interface ParserRequestPayload {
@@ -314,3 +370,29 @@ export interface ParserResponseFailure {
 }
 
 export type ParserResponse = ParserResponseSuccess | ParserResponseFailure;
+
+export interface RuntimeStoreDebugPublicationSnapshot {
+  publicationId: string;
+  createdAt: number;
+  lastAccessAt: number;
+  profileHint: 'epub' | 'webPub';
+  refCount: number;
+  ephemeral: boolean;
+  destroyedAt?: number;
+  resourceBytes: number;
+  resourceCount: number;
+  activeLeaseCount: number;
+  source?: PublicationRuntimeSource;
+  txtChapterDiagnostics?: TxtChapterDiagnostic[];
+}
+
+export interface RuntimeStoreDebugSnapshot {
+  dbName: string;
+  publicationCount: number;
+  resourceCount: number;
+  leaseCount: number;
+  activeLeaseCount: number;
+  totalResourceBytes: number;
+  publications: RuntimeStoreDebugPublicationSnapshot[];
+  leases: LeaseRecord[];
+}

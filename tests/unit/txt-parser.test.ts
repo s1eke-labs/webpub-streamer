@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { detectChapters } from '../../src/parse/txt/detectChapters.js';
+import {
+  detectChapters,
+  detectChaptersWithDiagnostics,
+} from '../../src/parse/txt/detectChapters.js';
 import { parseTxt } from '../../src/parse/txt/parseTxt.js';
 import { createChineseTxt, createEnglishTxt } from '../helpers/createTextFixtures.js';
 
@@ -108,6 +111,28 @@ describe('parseTxt', () => {
     expect(graph.toc[0]?.title).toBe('第一章 缩进标题');
   });
 
+  it('records chapter diagnostics with line numbers and rule metadata', () => {
+    const detected = detectChaptersWithDiagnostics('Preface\n\nChapter 1\n\n这里是段落内容。', {
+      chapterDetection: 'auto',
+      chapterPatterns: [],
+    });
+
+    expect(detected.diagnostics).toEqual([
+      {
+        title: 'Preface',
+        lineNumber: 1,
+        ruleName: 'Prologue/Epilogue 等英文单章标题',
+        source: 'builtin',
+      },
+      {
+        title: 'Chapter 1',
+        lineNumber: 3,
+        ruleName: 'Chapter/Ch. 序号 标题',
+        source: 'builtin',
+      },
+    ]);
+  });
+
   it('uses only caller-provided patterns in regex mode', async () => {
     const graph = await parseFixtureText(
       'Chapter 1\n\n这段内容不会触发内置规则。\n\nScene 1\n\n这是自定义规则命中的章节。',
@@ -120,6 +145,43 @@ describe('parseTxt', () => {
     expect(graph.readingOrder).toHaveLength(2);
     expect(graph.readingOrder[0]?.title).toBe('Start');
     expect(graph.readingOrder[1]?.title).toBe('Scene 1');
+    expect(graph.txtChapterDiagnostics).toEqual([
+      {
+        title: 'Start',
+        lineNumber: 1,
+        source: 'fallback',
+      },
+      {
+        title: 'Scene 1',
+        lineNumber: 5,
+        ruleName: 'custom:1',
+        source: 'custom',
+      },
+    ]);
+  });
+
+  it('records fallback chapter diagnostics at the first non-empty line', () => {
+    const detected = detectChaptersWithDiagnostics(
+      '\n\nChapter 1\n\n这段内容不会触发内置规则。\n\nScene 1\n\n这是自定义规则命中的章节。',
+      {
+        chapterDetection: 'regex',
+        chapterPatterns: [/^Scene\s+\d+.*$/u],
+      },
+    );
+
+    expect(detected.diagnostics).toEqual([
+      {
+        title: 'Start',
+        lineNumber: 3,
+        source: 'fallback',
+      },
+      {
+        title: 'Scene 1',
+        lineNumber: 7,
+        ruleName: 'custom:1',
+        source: 'custom',
+      },
+    ]);
   });
 
   it('does not fall back to built-in rules when regex mode has no patterns', async () => {
@@ -167,5 +229,15 @@ describe('parseTxt', () => {
     expect(graph.readingOrder).toHaveLength(1);
     expect(graph.readingOrder[0]?.title).toBe('Start');
     expect(graph.toc[0]?.title).toBe('Start');
+  });
+
+  it('requires boundary context before treating an auto-detected heading as a chapter title', async () => {
+    const graph = await parseFixtureText(
+      '前文内容\nChapter 1\nThis line should stay in the same chapter.\n\nChapter 2\n\nNew section starts here.',
+    );
+
+    expect(graph.readingOrder).toHaveLength(2);
+    expect(graph.readingOrder[0]?.title).toBe('Start');
+    expect(graph.readingOrder[1]?.title).toBe('Chapter 2');
   });
 });

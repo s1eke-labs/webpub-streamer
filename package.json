@@ -17,6 +17,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./debug": {
+      "types": "./dist/debug.d.ts",
+      "import": "./dist/debug.js"
+    },
     "./sw": {
       "types": "./dist/sw.d.ts",
       "import": "./dist/sw.js"

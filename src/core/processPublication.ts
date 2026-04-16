@@ -19,12 +19,22 @@ export async function processPublicationRequest(
     ? await parseEpub(payload.sourceBytes, payload.options)
     : await parseTxt(payload.sourceBytes, payload.sourceName, payload.options);
   const graph = buildCanonicalGraph(parsedGraph);
-
-  return materializePublication({
+  const materialized = materializePublication({
     publicationId: payload.publicationId,
     sourceFingerprint: payload.sourceFingerprint,
     parserVersion: payload.parserVersion,
     graph,
     manifestBaseUrl: payload.manifestBaseUrl,
   });
+
+  return {
+    ...materialized,
+    source: {
+      name: payload.sourceName,
+      mediaType: payload.sourceMediaType,
+      format: payload.format,
+      byteLength: payload.sourceBytes.byteLength,
+    },
+    txtChapterDiagnostics: graph.txtChapterDiagnostics,
+  };
 }

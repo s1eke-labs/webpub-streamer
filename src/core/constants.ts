@@ -1,6 +1,8 @@
 export const DEFAULT_SCOPE = '/__webpub_streamer__/';
 export const DEFAULT_DB_NAME = 's1eke-webpub-streamer';
 export const DEFAULT_LEASE_TTL_MS = 5 * 60 * 1000;
+export const DEFAULT_GC_INACTIVE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+export const DEFAULT_GC_MAX_TOTAL_BYTES = 256 * 1024 * 1024;
 export const DEFAULT_CHARACTERS_PER_POSITION = 1024;
 export const DEFAULT_PARSER_VERSION = '1.0.0';
 

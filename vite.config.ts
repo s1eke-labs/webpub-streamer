@@ -19,6 +19,7 @@ export default defineConfig({
       entry: {
         index: resolve(rootDir, 'src/index.ts'),
         sw: resolve(rootDir, 'src/sw.ts'),
+        debug: resolve(rootDir, 'src/debug.ts'),
         testing: resolve(rootDir, 'src/testing.ts'),
         'runtime-sw': resolve(rootDir, 'src/workers/runtime-sw.ts'),
         'parser-worker': resolve(rootDir, 'src/workers/parser.worker.ts'),

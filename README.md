@@ -14,6 +14,7 @@
 - 使用 IndexedDB 持久化 publication 资源，并通过 lease 管理生命周期
 - 通过 Service Worker 在固定 scope 下提供 publication 资源
 - 支持 root SW 合并 handler 模式，以及无 SW 宿主下的 standalone fallback
+- 提供 parser worker pool、结构化 debug 事件，以及可检查的运行时 store snapshot
 - 提供 manifest / positions / runtime 可达性的测试辅助工具
 
 ## 安装
@@ -64,11 +65,19 @@ const mount = await connectServiceWorkerMount({
 
 const store = await createIndexedDbRuntimeStore({
   dbName: mount.dbName,
+  gcPolicy: {
+    inactiveTtlMs: 7 * 24 * 60 * 60 * 1000,
+    maxTotalBytes: 256 * 1024 * 1024,
+  },
 });
 
 const streamer = await createWebPubStreamer({
   mount,
   store,
+  parserWorkerPoolSize: 2,
+  debugSink: (event) => {
+    console.debug(event.type, event.detail);
+  },
 });
 
 const runtime = await streamer.open(file, {
@@ -135,6 +144,9 @@ await runtime.release();
 - `suggestedLocalDataKey`
 - `release()`
 - `destroy()`
+- `debug.events`
+- `debug.source`
+- `debug.txtChapterDiagnostics`
 
 读者组件用完一个 runtime 后应调用 `release()`；如果你希望显式删除缓存并销毁 publication，则调用 `destroy()`。
 
@@ -159,6 +171,12 @@ await runtime.release();
 - `assertRuntimeFetchable(runtime, options)`
 - `openInThoriumHarness(runtime, options)`
 
+### `@s1eke/webpub-streamer/debug`
+
+- `inspectIndexedDbRuntimeStore({ dbName, timestamp? })`
+- `StreamerDebugEvent`
+- `RuntimeStoreDebugSnapshot`
+
 ## 当前能力边界
 
 - 仅支持浏览器环境，要求有 Service Worker、IndexedDB、Web Crypto 和 `TextDecoder`
@@ -170,7 +188,7 @@ await runtime.release();
 - 加密或 DRM 保护的 EPUB 会被拒绝
 - 当前里程碑下，EPUB 远程资源会被拒绝
 - EPUB 中的 JavaScript 会在物化时被剥离
-- 不支持或混淆过的字体会被丢弃并产生 warning
+- 混淆字体当前仍然采用 `warn-and-drop` / `fail` 策略，font deobfuscation 已明确延期到后续里程碑
 - TXT 章节识别支持 `auto`、`none`、`regex`
 
 ## 开发命令

@@ -2,7 +2,7 @@ import type {
   CanonicalPublicationGraph,
   OpenPublicationOptions,
 } from '../../core/types.js';
-import { detectChapters } from './detectChapters.js';
+import { detectChaptersWithDiagnostics } from './detectChapters.js';
 import { decodeText } from './detectEncoding.js';
 import {
   createTxtChapterPath,
@@ -47,7 +47,10 @@ export async function parseTxt(
   const title = inferTitle(sourceName, options.txt.title);
   const language = options.txt.language ?? 'en';
 
-  const chapters = detectChapters(normalizedText, {
+  const {
+    chapters,
+    diagnostics,
+  } = detectChaptersWithDiagnostics(normalizedText, {
     chapterDetection: options.txt.chapterDetection ?? 'auto',
     chapterPatterns: options.txt.chapterPatterns ?? [],
   });
@@ -92,6 +95,7 @@ export async function parseTxt(
       href: item.href,
       title: item.title,
     })),
+    txtChapterDiagnostics: diagnostics,
     warnings: [
       {
         code: 'TXT_ENCODING_DETECTED',

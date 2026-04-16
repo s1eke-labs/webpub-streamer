@@ -20,9 +20,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22.x
+          node-version: '24'
           cache: npm
           registry-url: https://registry.npmjs.org/
 
@@ -71,9 +71,7 @@ jobs:
         run: npm run test:integration
 
       - name: Publish to npm
-        run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3

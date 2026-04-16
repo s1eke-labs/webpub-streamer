@@ -3,7 +3,9 @@ import { processPublicationRequest } from '../core/processPublication.js';
 
 interface ParserWorkerRequest {
   id: string;
-  payload: ParserRequestPayload;
+  payload: Omit<ParserRequestPayload, 'sourceBytes'> & {
+    sourceBytes: ArrayBuffer;
+  };
 }
 
 declare const self: DedicatedWorkerGlobalScope;
@@ -13,7 +15,10 @@ self.addEventListener('message', async (event: MessageEvent<ParserWorkerRequest>
   let response: ParserResponse;
 
   try {
-    const publication = await processPublicationRequest(payload);
+    const publication = await processPublicationRequest({
+      ...payload,
+      sourceBytes: new Uint8Array(payload.sourceBytes),
+    });
     response = {
       ok: true,
       publication,

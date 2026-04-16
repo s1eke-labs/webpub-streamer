@@ -14,6 +14,7 @@ It is designed for Thorium-style Web Publication consumers: open a local file in
 - Stores publication resources in IndexedDB with lease-based lifecycle management
 - Serves publication resources from a Service Worker under a fixed runtime scope
 - Supports both merged root Service Worker integration and standalone fallback
+- Exposes parser worker pooling, structured debug events, and inspectable runtime store snapshots
 - Exposes testing helpers for manifest/positions/runtime validation
 
 ## Install
@@ -64,11 +65,19 @@ const mount = await connectServiceWorkerMount({
 
 const store = await createIndexedDbRuntimeStore({
   dbName: mount.dbName,
+  gcPolicy: {
+    inactiveTtlMs: 7 * 24 * 60 * 60 * 1000,
+    maxTotalBytes: 256 * 1024 * 1024,
+  },
 });
 
 const streamer = await createWebPubStreamer({
   mount,
   store,
+  parserWorkerPoolSize: 2,
+  debugSink: (event) => {
+    console.debug(event.type, event.detail);
+  },
 });
 
 const runtime = await streamer.open(file, {
@@ -135,6 +144,9 @@ await runtime.release();
 - `suggestedLocalDataKey`
 - `release()`
 - `destroy()`
+- `debug.events`
+- `debug.source`
+- `debug.txtChapterDiagnostics`
 
 Use `release()` when the reader is done with the runtime. Use `destroy()` when you want to tombstone and remove the publication cache.
 
@@ -159,6 +171,12 @@ Use `release()` when the reader is done with the runtime. Use `destroy()` when y
 - `assertRuntimeFetchable(runtime, options)`
 - `openInThoriumHarness(runtime, options)`
 
+### `@s1eke/webpub-streamer/debug`
+
+- `inspectIndexedDbRuntimeStore({ dbName, timestamp? })`
+- `StreamerDebugEvent`
+- `RuntimeStoreDebugSnapshot`
+
 ## Current Scope and Limitations
 
 - Browser-only: requires Service Worker, IndexedDB, Web Crypto, and `TextDecoder`
@@ -170,7 +188,7 @@ Use `release()` when the reader is done with the runtime. Use `destroy()` when y
 - Encrypted or DRM-protected EPUB files are rejected
 - Remote EPUB resources are rejected in the current milestone
 - EPUB JavaScript is stripped during materialization
-- Unsupported or obfuscated fonts are dropped with warnings
+- Obfuscated fonts still follow the current `warn-and-drop` / `fail` policy; font deobfuscation is explicitly deferred to a later milestone
 - TXT chapter detection supports `auto`, `none`, and `regex`
 
 ## Development
