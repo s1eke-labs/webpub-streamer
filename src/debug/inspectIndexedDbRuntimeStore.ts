@@ -69,34 +69,39 @@ export async function inspectIndexedDbRuntimeStore(
     );
   }
 
-  const publicationSnapshots: RuntimeStoreDebugPublicationSnapshot[] = publications.map((publication) => {
-    const metrics = resourceMetrics.get(publication.publicationId) ?? {
-      resourceBytes: 0,
-      resourceCount: 0,
-    };
-    return {
-      publicationId: publication.publicationId,
-      createdAt: publication.createdAt,
-      lastAccessAt: publication.lastAccessAt,
-      profileHint: publication.profileHint,
-      refCount: publication.refCount,
-      ephemeral: publication.ephemeral,
-      destroyedAt: publication.destroyedAt,
-      resourceBytes: publication.resourceBytes ?? metrics.resourceBytes,
-      resourceCount: publication.resourceCount ?? metrics.resourceCount,
-      activeLeaseCount: activeLeaseCounts.get(publication.publicationId) ?? 0,
-      source: toSource(publication),
-      txtChapterDiagnostics: publication.txtChapterDiagnostics,
-    };
-  }).sort((left, right) => left.publicationId.localeCompare(right.publicationId));
+  const publicationSnapshots: RuntimeStoreDebugPublicationSnapshot[] = publications
+    .map((publication) => {
+      const metrics = resourceMetrics.get(publication.publicationId) ?? {
+        resourceBytes: 0,
+        resourceCount: 0,
+      };
+      return {
+        publicationId: publication.publicationId,
+        createdAt: publication.createdAt,
+        lastAccessAt: publication.lastAccessAt,
+        profileHint: publication.profileHint,
+        refCount: publication.refCount,
+        ephemeral: publication.ephemeral,
+        destroyedAt: publication.destroyedAt,
+        resourceBytes: publication.resourceBytes ?? metrics.resourceBytes,
+        resourceCount: publication.resourceCount ?? metrics.resourceCount,
+        activeLeaseCount: activeLeaseCounts.get(publication.publicationId) ?? 0,
+        source: toSource(publication),
+        txtChapterDiagnostics: publication.txtChapterDiagnostics,
+      };
+    })
+    .sort((left, right) => left.publicationId.localeCompare(right.publicationId));
 
   return {
     dbName: options.dbName,
     publicationCount: publications.length,
     resourceCount: resources.length,
     leaseCount: leases.length,
-    activeLeaseCount: Array.from(activeLeaseCounts.values()).reduce((total, count) => total + count, 0),
-    totalResourceBytes: publicationSnapshots.reduce((total, publication) => total + publication.resourceBytes, 0),
+    activeLeaseCount: Array
+      .from(activeLeaseCounts.values())
+      .reduce((total, count) => total + count, 0),
+    totalResourceBytes: publicationSnapshots
+      .reduce((total, publication) => total + publication.resourceBytes, 0),
     publications: publicationSnapshots,
     leases: leases.sort((left, right) => left.createdAt - right.createdAt),
   };

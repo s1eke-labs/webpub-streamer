@@ -113,7 +113,9 @@ export async function createIndexedDbRuntimeStore(
     };
   }
 
-  async function ensurePublicationMetrics(publication: PublicationRecord): Promise<PublicationRecord> {
+  async function ensurePublicationMetrics(
+    publication: PublicationRecord,
+  ): Promise<PublicationRecord> {
     if (typeof publication.resourceBytes === 'number' && typeof publication.resourceCount === 'number') {
       return publication;
     }
@@ -260,7 +262,8 @@ export async function createIndexedDbRuntimeStore(
     },
     async persistPublication(payload: PersistedPublicationPayload): Promise<void> {
       const transaction = database.transaction(['publications', 'resources'], 'readwrite');
-      const resourceBytes = payload.resources.reduce((total, resource) => total + resource.byteLength, 0);
+      const resourceBytes = payload.resources
+        .reduce((total, resource) => total + resource.byteLength, 0);
       const publication: PublicationRecord = {
         ...payload.publication,
         resourceBytes,

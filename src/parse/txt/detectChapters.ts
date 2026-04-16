@@ -69,11 +69,15 @@ function hasAutoHeadingContext(lines: string[], index: number): boolean {
   return isBlankLine(lines[index - 1]) || isBlankLine(lines[index + 1]);
 }
 
-function normalizeChapters(chapters: ParsedChapterInternal[], normalized: string): DetectChaptersResult {
+function normalizeChapters(
+  chapters: ParsedChapterInternal[],
+  normalized: string,
+): DetectChaptersResult {
   const filtered = chapters
     .map((chapter, index) => ({
       ...chapter,
-      title: normalizeChapterTitle(chapter.title) || createFallbackTitle(index),
+      title: normalizeChapterTitle(chapter.title)
+        || createFallbackTitle(index),
       lines: chapter.lines.filter((line) => line.trim().length > 0),
     }))
     .filter((chapter) => chapter.lines.length > 0 || chapter.title.trim().length > 0);

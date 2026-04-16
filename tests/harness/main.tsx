@@ -195,7 +195,8 @@ function Harness() {
             return {
               publicationId: runtimeRef.current?.publicationId ?? null,
               manifestUrl: runtimeRef.current?.manifestUrl ?? null,
-              debugEventTypes: runtimeRef.current?.debug?.events.map((eventItem) => eventItem.type) ?? [],
+              debugEventTypes: runtimeRef.current?.debug?.events
+                .map((eventItem) => eventItem.type) ?? [],
             };
           },
         };

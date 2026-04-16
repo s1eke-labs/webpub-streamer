@@ -274,7 +274,8 @@ function createSharedParser(
   const queue: ParserQueueTask[] = [];
   const workerSlots: ParserWorkerSlot[] = [];
 
-  const createWorker = (slot: ParserWorkerSlot): Worker => {
+  const createWorker = (initialSlot: ParserWorkerSlot): Worker => {
+    const slot = initialSlot;
     const scriptUrl = options.parserWorkerScriptUrl
       ? new URL(options.parserWorkerScriptUrl, globalThis.location?.origin ?? 'http://localhost')
       : createWorkerScriptUrl();
@@ -295,7 +296,7 @@ function createSharedParser(
         return;
       }
 
-      const task = slot.task;
+      const { task } = slot;
       slot.task = null;
       if (event.data.response.ok) {
         task.emitDebug({
@@ -330,7 +331,7 @@ function createSharedParser(
         return;
       }
 
-      const task = slot.task;
+      const { task } = slot;
       resetSlot();
       if (task) {
         task.emitDebug({
@@ -677,9 +678,9 @@ export async function createWebPubStreamer(
       publicationId,
       detail: {
         status: 'done',
-          leaseId: lease.leaseId,
-        },
-      });
+        leaseId: lease.leaseId,
+      },
+    });
     debug.phase('lease:create:done', publicationId);
 
     debug.phase('gc:post-persist:start', publicationId);

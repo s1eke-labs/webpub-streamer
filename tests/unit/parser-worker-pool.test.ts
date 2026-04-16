@@ -35,7 +35,13 @@ class FakeParserWorker {
   private readonly listeners = new Map<string, Array<(event: any) => void>>();
   private terminated = false;
 
-  constructor(_url: URL, _options: WorkerOptions) {
+  constructor(url: URL, options: WorkerOptions) {
+    if (!(url instanceof URL)) {
+      throw new TypeError('Expected parser worker URL');
+    }
+    if (options.type !== 'module') {
+      throw new TypeError('Expected module worker options');
+    }
     FakeParserWorker.constructorCount += 1;
   }
 
@@ -77,10 +83,11 @@ class FakeParserWorker {
         await new Promise((resolve) => {
           setTimeout(resolve, 10);
         });
-        const publication = await processPublicationRequest({
+        const request: Parameters<typeof processPublicationRequest>[0] = {
           ...message.payload,
           sourceBytes: new Uint8Array(message.payload.sourceBytes),
-        } as Parameters<typeof processPublicationRequest>[0]);
+        };
+        const publication = await processPublicationRequest(request);
         FakeParserWorker.activeCount -= 1;
         this.emit('message', {
           data: {
